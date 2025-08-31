@@ -1,0 +1,18 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+
+    "_comment": "Oscilloscope:Mode = Simulated | Scpi. In Scpi mode set Resource to a VISA resource string, e.g. TCPIP::192.168.1.50::INSTR or USB0::0x1AB1::0x044C::DHO9...::INSTR",
+    "Oscilloscope:Mode": "Simulated",
+    "Oscilloscope:Resource": "",
+    "Oscilloscope:TimeoutMs": "10000",
+
+    "Cors:AllowedOrigins": "http://localhost:5173"
+  },
+  "Host": {
+    "CORS": "*",
+    "CORSCredentials": false
+  }
+}
