@@ -28,7 +28,7 @@ public sealed class TcpScpiTransport : IScpiTransport
         _timeoutMs = timeoutMs;
     }
 
-    internal static (string host, int port) ParseResource(string resource)
+    public static (string host, int port) ParseResource(string resource)
     {
         if (string.IsNullOrWhiteSpace(resource))
             throw new OscilloscopeException("No VISA resource configured", OscilloscopeErrorKind.Connection);
