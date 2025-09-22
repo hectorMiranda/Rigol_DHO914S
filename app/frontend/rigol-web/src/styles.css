@@ -1,0 +1,106 @@
+:root {
+  --bg: #0b0e14;
+  --panel: #141925;
+  --panel-2: #1b2230;
+  --border: #283145;
+  --text: #d6def0;
+  --text-dim: #8a96b0;
+  --accent: #38bdf8;
+  --ok: #4ade80;
+  --warn: #fbbf24;
+  --err: #f87171;
+  --ch1: #ffdc00;
+  --ch2: #00c8ff;
+  --ch3: #ff40c8;
+  --ch4: #00dc78;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+}
+
+.app__main {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 12px;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.app__scope { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.app__side { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.panel h2 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--border);
+}
+.header__title { font-weight: 600; font-size: 15px; }
+.header__model { color: var(--text-dim); font-size: 13px; }
+.header__spacer { flex: 1; }
+
+.badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.badge--sim { color: var(--warn); border-color: var(--warn); }
+.badge--live { color: var(--ok); border-color: var(--ok); }
+
+.statusbar {
+  display: flex;
+  gap: 18px;
+  padding: 6px 16px;
+  font-size: 12px;
+  color: var(--text-dim);
+  background: var(--panel-2);
+  border-top: 1px solid var(--border);
+}
+.statusbar b { color: var(--text); font-weight: 600; }
+
+button {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+button:hover { border-color: var(--accent); }
+button.is-active { border-color: var(--accent); color: var(--accent); }
+
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dot--ok { background: var(--ok); }
+.dot--warn { background: var(--warn); }
+.dot--err { background: var(--err); }
