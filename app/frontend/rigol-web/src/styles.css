@@ -100,6 +100,29 @@ button {
 button:hover { border-color: var(--accent); }
 button.is-active { border-color: var(--accent); color: var(--accent); }
 
+select,
+input {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+select:focus,
+input:focus { outline: none; border-color: var(--accent); }
+
+.scope canvas { width: 100%; height: 100%; }
+
+.app__side::-webkit-scrollbar { width: 8px; }
+.app__side::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+@media (max-width: 880px) {
+  .app__main { grid-template-columns: 1fr; }
+  .app__side { flex-direction: row; flex-wrap: wrap; }
+  .app__side .panel { flex: 1 1 240px; }
+}
+
 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .dot--ok { background: var(--ok); }
 .dot--warn { background: var(--warn); }

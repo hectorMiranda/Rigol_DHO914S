@@ -6,7 +6,7 @@
   "description": "Browser front end for the Rigol DHO914S live waveform stream",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx",
     "test": "vitest run",
