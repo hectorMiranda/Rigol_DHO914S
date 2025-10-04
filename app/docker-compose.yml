@@ -1,0 +1,17 @@
+# Run the whole stack: Functions API (simulator mode) + nginx-served SPA.
+#   docker compose up --build
+#   open http://localhost:8080
+services:
+  api:
+    build: ./backend
+    environment:
+      - Oscilloscope__Mode=Simulated
+    ports:
+      - "7071:80"
+
+  web:
+    build: ./frontend/rigol-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
