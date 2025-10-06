@@ -16,10 +16,16 @@ from rigol_dho914s import RigolDHO914S
 class ScreenshotTool:
     """Tool for taking oscilloscope screenshots."""
     
-    def __init__(self, connection_type='usb', ip_address=None):
+    def __init__(self, connection_type='usb', ip_address=None, timeout=15000, output_dir='outputs'):
         """Initialize the screenshot tool."""
         self.connection_type = connection_type
         self.ip_address = ip_address
+        self.timeout = timeout
+        self.output_dir = output_dir
+        
+        # Create output directory if it doesn't exist
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
     
     def take_screenshot(self, filename=None, format='PNG', timestamp=False):
         """
@@ -32,7 +38,8 @@ class ScreenshotTool:
         """
         try:
             with RigolDHO914S(connection_type=self.connection_type, 
-                            ip_address=self.ip_address) as scope:
+                            ip_address=self.ip_address,
+                            timeout=self.timeout) as scope:
                 
                 # Generate filename if not provided
                 if filename is None:
@@ -47,6 +54,10 @@ class ScreenshotTool:
                     name, ext = os.path.splitext(filename)
                     timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                     filename = f"{name}_{timestamp_str}{ext}"
+                
+                # Ensure filename is in the output directory
+                if not os.path.isabs(filename):
+                    filename = os.path.join(self.output_dir, filename)
                 
                 print(f"Taking screenshot...")
                 print(f"Format: {format}")
@@ -82,6 +93,7 @@ class ScreenshotTool:
         for i in range(count):
             timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"screenshot_{i+1:03d}_{timestamp_str}.{format.lower()}"
+            filename = os.path.join(self.output_dir, filename)
             
             print(f"Screenshot {i+1}/{count}: {filename}")
             result = self.take_screenshot(filename, format=format, timestamp=False)
@@ -105,7 +117,8 @@ class ScreenshotTool:
         """
         try:
             with RigolDHO914S(connection_type=self.connection_type,
-                            ip_address=self.ip_address) as scope:
+                            ip_address=self.ip_address,
+                            timeout=self.timeout) as scope:
                 
                 # Generate base filename
                 if filename is None:

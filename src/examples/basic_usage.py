@@ -39,8 +39,11 @@ def take_screenshot_example():
     
     try:
         with RigolDHO914S() as scope:
+            # Ensure outputs directory exists
+            os.makedirs("outputs", exist_ok=True)
+            
             # Take screenshot in PNG format
-            filename = "oscilloscope_screenshot.png"
+            filename = "outputs/oscilloscope_screenshot.png"
             scope.take_screenshot(filename, format='PNG')
             print(f"Screenshot saved as {filename}")
             

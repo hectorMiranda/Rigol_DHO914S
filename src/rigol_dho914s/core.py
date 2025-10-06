@@ -30,7 +30,7 @@ class RigolDHO914S:
     """
     
     def __init__(self, connection_type: str = 'usb', resource_string: Optional[str] = None,
-                 ip_address: Optional[str] = None, timeout: float = 5000):
+                 ip_address: Optional[str] = None, timeout: float = 10000):
         """
         Initialize connection to the oscilloscope.
         
@@ -38,7 +38,7 @@ class RigolDHO914S:
             connection_type: 'usb' or 'ethernet'
             resource_string: Specific VISA resource string (optional for USB auto-detect)
             ip_address: IP address for Ethernet connection
-            timeout: Command timeout in milliseconds
+            timeout: Command timeout in milliseconds (default: 10000 = 10 seconds)
         """
         if not PYVISA_AVAILABLE:
             raise ImportError("PyVISA is required. Install with: pip install pyvisa pyvisa-py")
@@ -282,36 +282,108 @@ class RigolDHO914S:
         
         Args:
             filename: Output filename
-            format: Image format (PNG, BMP, JPEG)
+            format: Image format (PNG, BMP, JPEG) - Note: DHO914S primarily supports PNG
         """
-        format = format.upper()
-        if format not in ['PNG', 'BMP', 'JPEG']:
-            raise ValueError("Format must be PNG, BMP, or JPEG")
+        if not self.instrument:
+            raise Exception("Not connected to oscilloscope")
         
         try:
-            # Set up hardcopy format
-            self.write(SCPICommands.HARDCOPY_FORMAT.format(format))
+            # Store original settings
+            original_timeout = self.instrument.timeout
+            original_read_term = self.instrument.read_termination
+            original_write_term = self.instrument.write_termination
             
-            # Get screenshot data
-            self.write("DISP:DATA? ON,OFF,PNG")
+            # Configure for binary mode with appropriate timeout
+            self.instrument.timeout = 15000  # 15 second timeout
+            self.instrument.read_termination = None  # Binary mode
+            self.instrument.write_termination = '\n'
             
-            # Read binary data
-            raw_data = self.instrument.read_raw()
+            # Clear any errors first
+            self.instrument.write('*CLS')
+            import time
+            time.sleep(0.5)
             
-            # Remove VISA header (typically first 10 bytes)
-            if raw_data.startswith(b'#'):
-                header_len = int(chr(raw_data[1])) + 2
-                image_data = raw_data[header_len:]
+            # Check if scope is ready
+            opc = self.instrument.query('*OPC?')
+            print(f"Scope ready: {opc.strip()}")
+            
+            # Restore binary mode after text query
+            self.instrument.read_termination = None
+            
+            # Send the screenshot command - DHO914S works best with simple DISP:DATA?
+            print("Taking screenshot...")
+            self.instrument.write('DISP:DATA?')
+            
+            # Wait a moment for the scope to prepare the data
+            time.sleep(1)
+            
+            # Read data in chunks to avoid timeout
+            image_data = b''
+            chunk_size = 1024  # 1KB chunks work well
+            max_attempts = 300  # Allow for larger images (300KB max)
+            
+            print("Reading screenshot data...")
+            
+            for attempt in range(max_attempts):
+                try:
+                    chunk = self.instrument.read_bytes(chunk_size)
+                    if not chunk:
+                        break
+                    
+                    image_data += chunk
+                    
+                    # Check if we found PNG signature and have enough data
+                    if b'\x89PNG' in image_data:
+                        # Look for PNG end marker (IEND) to know when we have complete image
+                        if b'IEND\xae\x42\x60\x82' in image_data:
+                            print(f"Complete PNG detected: {len(image_data)} bytes")
+                            break
+                    
+                    # Progress indicator for large images
+                    if attempt % 20 == 0 and attempt > 0:
+                        print(f"Read {len(image_data)} bytes...")
+                
+                except pyvisa.VisaIOError as e:
+                    if 'timeout' in str(e).lower():
+                        # Timeout is normal when no more data is available
+                        print(f"Read complete (timeout after {len(image_data)} bytes)")
+                        break
+                    else:
+                        raise e
+            
+            # Restore original settings
+            self.instrument.timeout = original_timeout
+            self.instrument.read_termination = original_read_term
+            self.instrument.write_termination = original_write_term
+            
+            # Validate we got image data
+            if len(image_data) < 1000:
+                raise Exception(f"Screenshot data too small: {len(image_data)} bytes")
+            
+            # Look for PNG signature and extract image
+            if b'\x89PNG' in image_data:
+                png_start = image_data.find(b'\x89PNG')
+                final_image = image_data[png_start:]
+                print(f"Extracted PNG image: {len(final_image)} bytes")
             else:
-                image_data = raw_data
+                # If no PNG signature, save raw data (might be different format)
+                final_image = image_data
+                print(f"No PNG signature found, saving raw data: {len(final_image)} bytes")
             
             # Save to file
             with open(filename, 'wb') as f:
-                f.write(image_data)
+                f.write(final_image)
             
-            print(f"Screenshot saved as {filename}")
+            print(f"Screenshot saved as {filename} ({len(final_image)} bytes)")
             
         except Exception as e:
+            # Ensure settings are restored even on error
+            try:
+                self.instrument.timeout = original_timeout
+                self.instrument.read_termination = original_read_term
+                self.instrument.write_termination = original_write_term
+            except:
+                pass
             raise CommandError(f"Failed to take screenshot: {str(e)}")
     
     # Waveform acquisition methods

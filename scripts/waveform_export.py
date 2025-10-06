@@ -10,9 +10,12 @@ import argparse
 import sys
 import os
 import json
-import numpy as np
-
-# Add the src directory to the path
+import numpy as np    parser.add_argument(
+        "-o", "--output",
+        metavar='DIR',
+        default='outputs',
+        help="Output directory (default: outputs)"
+    )dd the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from rigol_dho914s import RigolDHO914S, ConnectionError

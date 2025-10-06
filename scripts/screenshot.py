@@ -85,8 +85,8 @@ Examples:
     parser.add_argument(
         "--timeout",
         type=float,
-        default=5.0,
-        help="Connection timeout in seconds (default: 5.0)"
+        default=15.0,
+        help="Connection timeout in seconds (default: 15.0)"
     )
     
     # Verbose output
@@ -110,11 +110,13 @@ Examples:
         if args.ethernet:
             if args.verbose:
                 print(f"Connecting via Ethernet to {args.ethernet}...")
-            tool = ScreenshotTool(connection_type='ethernet', ip_address=args.ethernet)
+            tool = ScreenshotTool(connection_type='ethernet', 
+                                ip_address=args.ethernet, 
+                                timeout=args.timeout*1000)
         else:
             if args.verbose:
                 print("Connecting via USB...")
-            tool = ScreenshotTool(connection_type='usb')
+            tool = ScreenshotTool(connection_type='usb', timeout=args.timeout*1000)
         
         # Execute based on command-line arguments
         if args.multiple:

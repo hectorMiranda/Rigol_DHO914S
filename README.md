@@ -52,7 +52,7 @@ print(scope.get_identity())
 
 ### Take a Screenshot
 ```python
-scope.take_screenshot('screenshot.png')
+scope.take_screenshot('outputs/screenshot.png')
 ```
 
 ### Configure Channel and Capture Waveform
@@ -64,7 +64,7 @@ scope.set_channel_enable(1, True)
 
 # Capture waveform data
 waveform = scope.get_waveform_data(1)
-scope.save_waveform_csv(waveform, 'channel1_data.csv')
+scope.save_waveform_csv(waveform, 'outputs/channel1_data.csv')
 ```
 
 ## Project Structure
@@ -83,6 +83,7 @@ Rigol_DHO914S/
 │       ├── screenshot_tool.py   # Screenshot utility
 │       ├── waveform_capture.py  # Waveform acquisition
 │       └── automated_test.py    # Automated test suite
+├── outputs/                     # Generated files (screenshots, data)
 ├── tests/
 │   ├── test_connection.py
 │   ├── test_commands.py
@@ -105,7 +106,7 @@ Rigol_DHO914S/
 
 ### Screenshot Tool
 ```bash
-python scripts/screenshot.py --output screenshot.png --format PNG
+python scripts/screenshot.py --output my_screenshot.png --format PNG
 ```
 
 ### Scope Information
@@ -115,8 +116,10 @@ python scripts/scope_info.py
 
 ### Waveform Export
 ```bash
-python scripts/waveform_export.py --channels 1,2 --format CSV --output data/
+python scripts/waveform_export.py --channels 1,2 --format CSV
 ```
+
+*Note: All output files are saved to the `outputs/` directory by default.*
 
 ## API Reference
 
