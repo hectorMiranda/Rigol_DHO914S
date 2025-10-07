@@ -240,6 +240,11 @@ class RigolDHO914S:
         validate_channel(channel)
         return self.query(SCPICommands.CHANNEL_COUPLING_QUERY.format(channel))
     
+    def get_channel_probe(self, channel: int) -> float:
+        """Get channel probe ratio."""
+        validate_channel(channel)
+        return float(self.query(SCPICommands.CHANNEL_PROBE_QUERY.format(channel)))
+    
     # Timebase control methods
     def set_timebase_scale(self, scale: float) -> None:
         """Set horizontal timebase scale (seconds/division)."""
