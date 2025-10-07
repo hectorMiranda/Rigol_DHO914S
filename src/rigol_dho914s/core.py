@@ -294,7 +294,7 @@ class RigolDHO914S:
             original_write_term = self.instrument.write_termination
             
             # Configure for binary mode with appropriate timeout
-            self.instrument.timeout = 15000  # 15 second timeout
+            self.instrument.timeout = 17000  # 15 second timeout
             self.instrument.read_termination = None  # Binary mode
             self.instrument.write_termination = '\n'
             
