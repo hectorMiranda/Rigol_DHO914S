@@ -1,0 +1,20 @@
+Rigol DHO914S Channel 1 Measurements
+Timestamp: 2025-10-06 22:02:32.770582
+==================================================
+
+Data Points: 101
+Time Range: -0.005000 to -0.004000 seconds
+Sample Rate: 100000 Hz
+
+Voltage Measurements:
+  vpp: 98999999999999993426744560981400092672.000000 V
+  vmax: 98999999999999993426744560981400092672.000000 V
+  vmin: -0.022933 V
+  vrms: 1.748200 V
+
+Time Measurements:
+  frequency: 1000.000000000 s
+  period: 0.000999950 s
+  rise_time: 0.000148030 s
+  fall_time: 0.000148370 s
+  pulse_width: 0.000688960 s

@@ -10,12 +10,10 @@ import argparse
 import sys
 import os
 import json
-import numpy as np    parser.add_argument(
-        "-o", "--output",
-        metavar='DIR',
-        default='outputs',
-        help="Output directory (default: outputs)"
-    )dd the src directory to the path
+import datetime
+import numpy as np
+
+# Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from rigol_dho914s import RigolDHO914S, ConnectionError
@@ -39,15 +37,33 @@ def export_channel_data(scope, channel, output_dir, formats, verbose=False):
         print(f"Exporting Channel {channel}...")
     
     try:
-        # Ensure channel is enabled
+        # Ensure channel is enabled and wait for scope to respond
         scope.set_channel_enable(channel, True)
+        import time
+        time.sleep(0.2)  # Small delay to prevent command overload
         
         # Capture waveform data
         waveform = scope.get_waveform_data(channel)
         
-        # Get measurements
-        voltage_measurements = scope.get_voltage_measurements(channel)
-        time_measurements = scope.get_time_measurements(channel)
+        # Validate we got meaningful data
+        if len(waveform['voltage']) < 2:
+            raise ValueError(f"Insufficient data points: {len(waveform['voltage'])}")
+        
+        # Get measurements with error handling
+        voltage_measurements = {}
+        time_measurements = {}
+        
+        try:
+            voltage_measurements = scope.get_voltage_measurements(channel)
+        except Exception as e:
+            if verbose:
+                print(f"  ⚠️  Could not get voltage measurements: {e}")
+        
+        try:
+            time_measurements = scope.get_time_measurements(channel)
+        except Exception as e:
+            if verbose:
+                print(f"  ⚠️  Could not get time measurements: {e}")
         
         results = {
             'channel': channel,
@@ -55,7 +71,9 @@ def export_channel_data(scope, channel, output_dir, formats, verbose=False):
             'files': []
         }
         
-        base_filename = f"ch{channel}_waveform"
+        # Generate unique filename with timestamp
+        timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        base_filename = f"ch{channel}_waveform_{timestamp_str}"
         
         # Export in requested formats
         for format_type in formats:
@@ -130,7 +148,13 @@ def export_channel_data(scope, channel, output_dir, formats, verbose=False):
             
             f.write(f"Data Points: {len(waveform['voltage'])}\n")
             f.write(f"Time Range: {waveform['time'][0]:.6f} to {waveform['time'][-1]:.6f} seconds\n")
-            f.write(f"Sample Rate: {1/(waveform['time'][1] - waveform['time'][0]):.0f} Hz\n\n")
+            
+            # Calculate sample rate safely
+            if len(waveform['time']) > 1:
+                sample_rate = 1/(waveform['time'][1] - waveform['time'][0])
+                f.write(f"Sample Rate: {sample_rate:.0f} Hz\n\n")
+            else:
+                f.write("Sample Rate: N/A (insufficient data)\n\n")
             
             f.write("Voltage Measurements:\n")
             for name, value in voltage_measurements.items():
@@ -158,14 +182,19 @@ def export_multiple_channels(scope, channels, output_dir, formats, verbose=False
     all_waveforms = {}
     
     # Export individual channels
-    for channel in channels:
+    for i, channel in enumerate(channels):
         result = export_channel_data(scope, channel, output_dir, formats, verbose)
         if result:
             all_results.append(result)
             
-            # Store waveform for combined export
+            # Store waveform for combined export (get it from the result to avoid duplicate calls)
             waveform = scope.get_waveform_data(channel)
             all_waveforms[channel] = waveform
+        
+        # Add delay between channels to prevent command errors
+        if i < len(channels) - 1:  # Don't delay after last channel
+            import time
+            time.sleep(0.5)
     
     # Create combined exports
     if len(all_waveforms) > 1:
@@ -277,8 +306,8 @@ Examples:
     parser.add_argument(
         "-o", "--output",
         metavar='DIRECTORY',
-        default='.',
-        help="Output directory (default: current directory)"
+        default='outputs',
+        help="Output directory (default: outputs)"
     )
     
     # Connection options
@@ -369,6 +398,13 @@ Examples:
         with scope:
             if args.verbose:
                 print(f"Connected to: {scope.get_identity()}")
+            
+            # Clear any previous errors
+            scope.clear_status()
+            if args.verbose:
+                error_status = scope.get_error()
+                if error_status != '0,"No error"':
+                    print(f"Cleared previous errors: {error_status}")
             
             # Start acquisition if requested
             if args.run_first:

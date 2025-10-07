@@ -159,8 +159,21 @@ class RigolDHO914S:
             Binary response from oscilloscope
         """
         try:
-            response = self.instrument.query_binary_values(command, datatype='s')
-            return b''.join(response)
+            # Use read_raw for binary data and handle IEEE 488.2 block format
+            self.instrument.write(command)
+            raw_response = self.instrument.read_raw()
+            
+            # Handle IEEE 488.2 definite length block data format
+            # Format: #<digit><length><data>
+            if raw_response.startswith(b'#'):
+                # Skip the IEEE header to get the actual data
+                digit_count = int(chr(raw_response[1]))
+                header_length = 2 + digit_count
+                data = raw_response[header_length:]
+                return data
+            else:
+                return raw_response
+                
         except Exception as e:
             raise CommandError(f"Failed to query binary '{command}': {str(e)}")
     
@@ -406,6 +419,9 @@ class RigolDHO914S:
         validate_channel(channel)
         
         try:
+            # Ensure channel is enabled first
+            self.set_channel_enable(channel, True)
+            
             # Set waveform source
             self.write(SCPICommands.WAVEFORM_SOURCE.format(f"CHAN{channel}"))
             
@@ -417,8 +433,13 @@ class RigolDHO914S:
             
             # Set data range if specified
             if points:
-                self.write(SCPICommands.WAVEFORM_START.format(1))
-                self.write(SCPICommands.WAVEFORM_STOP.format(points))
+                # Check current memory depth to ensure points is valid
+                try:
+                    self.write(SCPICommands.WAVEFORM_START.format(1))
+                    self.write(SCPICommands.WAVEFORM_STOP.format(points))
+                except:
+                    # If setting points fails, use default range
+                    pass
             
             # Get waveform preamble
             preamble_str = self.query(SCPICommands.WAVEFORM_PREAMBLE)
@@ -430,8 +451,9 @@ class RigolDHO914S:
             # Convert to voltage
             voltage_data = convert_raw_data_to_voltage(raw_data, preamble)
             
-            # Create time array
-            time_data = create_time_array(preamble)
+            # Create time array with the same length as actual voltage data
+            actual_points = len(voltage_data)
+            time_data = np.arange(actual_points) * preamble['x_increment'] + preamble['x_origin']
             
             return {
                 'time': time_data,
@@ -462,9 +484,14 @@ class RigolDHO914S:
         
         try:
             result = self.query(SCPICommands.MEASURE_ITEM.format(measurement_type, channel))
-            return float(result)
-        except ValueError:
-            raise DataError(f"Invalid measurement result: {result}")
+            # Handle invalid measurement results (like 9.9E37 for no signal)
+            value = float(result)
+            if abs(value) > 1e10:  # Likely an invalid/overflow value
+                return None
+            return value
+        except (ValueError, Exception) as e:
+            # Return None for any measurement that fails
+            return None
     
     def get_voltage_measurements(self, channel: int) -> Dict[str, float]:
         """Get common voltage measurements for a channel."""

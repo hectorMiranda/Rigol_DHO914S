@@ -30,10 +30,10 @@ def parse_waveform_preamble(preamble_string: str) -> dict:
         'count': int(parts[3]),         # Always 1
         'x_increment': float(parts[4]), # Time between data points
         'x_origin': float(parts[5]),    # Time of first data point
-        'x_reference': int(parts[6]),   # Always 0
+        'x_reference': int(float(parts[6])),   # Always 0 (convert float to int)
         'y_increment': float(parts[7]), # Voltage per LSB
         'y_origin': float(parts[8]),    # Voltage at center screen
-        'y_reference': int(parts[9])    # Vertical position
+        'y_reference': int(float(parts[9]))    # Vertical position (convert float to int)
     }
 
 
@@ -49,8 +49,8 @@ def convert_raw_data_to_voltage(raw_data: bytes, preamble: dict) -> np.ndarray:
         NumPy array of voltage values
     """
     if preamble['format'] == 0:  # BYTE format
-        # Convert bytes to signed integers (-128 to 127)
-        data_array = np.frombuffer(raw_data, dtype=np.int8)
+        # Convert bytes to unsigned integers (0 to 255) for DHO914S
+        data_array = np.frombuffer(raw_data, dtype=np.uint8)
     elif preamble['format'] == 1:  # WORD format
         # Convert bytes to signed 16-bit integers
         data_array = np.frombuffer(raw_data, dtype=np.int16)
