@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 
+test_results/
 # Output files - screenshots, data, etc.
 outputs/
 *.png
