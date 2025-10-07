@@ -44,10 +44,8 @@ class ScreenshotTool:
                 # Generate filename if not provided
                 if filename is None:
                     timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                    if timestamp:
-                        filename = f"screenshot_{timestamp_str}.{format.lower()}"
-                    else:
-                        filename = f"screenshot.{format.lower()}"
+                    # Always use timestamp for auto-generated filenames to avoid overwrites
+                    filename = f"screenshot_{timestamp_str}.{format.lower()}"
                 
                 # Add timestamp to existing filename if requested
                 elif timestamp:
