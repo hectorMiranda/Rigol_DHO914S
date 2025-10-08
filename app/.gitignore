@@ -1,0 +1,23 @@
+# ---- .NET ----
+bin/
+obj/
+*.user
+local.settings.json
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+# ---- Node / Vite ----
+node_modules/
+dist/
+.vite/
+*.local
+npm-debug.log*
+yarn-error.log*
+
+# ---- Editors / OS ----
+.vs/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
