@@ -85,3 +85,15 @@ export interface StreamFrame {
   t: number;
   frames: Waveform[];
 }
+
+export interface Spectrum {
+  channel: number;
+  window: string;
+  sampleRate: number;
+  frequencyStep: number;
+  magnitudesDb: number[];
+  timestamp: number;
+  bins: number;
+}
+
+export type MathOp = 'add' | 'subtract' | 'multiply';

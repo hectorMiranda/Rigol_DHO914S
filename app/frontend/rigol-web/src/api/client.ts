@@ -4,9 +4,11 @@ import type {
   ChannelConfig,
   ChannelUpdate,
   DeviceInfo,
+  MathOp,
   MeasurementSet,
   RunState,
   ScopeStatus,
+  Spectrum,
   Waveform,
 } from './types';
 
@@ -56,6 +58,12 @@ export const api = {
     request<Waveform>(`waveform/${channel}${points ? `?points=${points}` : ''}`),
 
   getMeasurements: (channel: number) => request<MeasurementSet>(`measurements/${channel}`),
+
+  getFft: (channel: number, points = 2048, window = 'hann') =>
+    request<Spectrum>(`fft/${channel}?points=${points}&window=${window}`),
+
+  getMath: (op: MathOp, a: number, b: number, points = 600) =>
+    request<Waveform>(`math/${op}?a=${a}&b=${b}&points=${points}`),
 
   getAcquisition: () => request<AcquisitionState>('acquisition'),
 
