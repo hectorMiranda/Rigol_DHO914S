@@ -5,6 +5,8 @@ import { AppHeader } from './components/AppHeader';
 import { StatusBar } from './components/StatusBar';
 import { DeviceInfoPanel } from './components/DeviceInfoPanel';
 import { ScopeDisplay } from './components/ScopeDisplay';
+import { SpectrumView } from './components/SpectrumView';
+import { ViewTabs } from './components/ViewTabs';
 import { ScopeLegend } from './components/ScopeLegend';
 import { ChannelControls } from './components/ChannelControls';
 import { TriggerControls } from './components/TriggerControls';
@@ -13,10 +15,14 @@ import { StreamSettings, type StreamConfig } from './components/StreamSettings';
 import { ScreenshotViewer } from './components/ScreenshotViewer';
 import { useScopeStatus } from './hooks/useScopeStatus';
 import { useWaveformStream } from './hooks/useWaveformStream';
+import { useSpectrum } from './hooks/useSpectrum';
+
+type ViewMode = 'scope' | 'spectrum';
 
 export default function App() {
   const { status, error, setStatus } = useScopeStatus();
   const [stream, setStream] = useState<StreamConfig>({ intervalMs: 100, points: 600 });
+  const [view, setView] = useState<ViewMode>('scope');
 
   const channels = status?.channels ?? [];
   const enabledChannels = useMemo(
@@ -25,6 +31,8 @@ export default function App() {
   );
 
   const running = status?.acquisition.runState !== 'stopped';
+  const analyzeChannel = enabledChannels[0] ?? 1;
+  const spectrum = useSpectrum(analyzeChannel, 'hann', view === 'spectrum' && running);
   const { frames, connected, frameRate } = useWaveformStream({
     channels: enabledChannels,
     intervalMs: stream.intervalMs,
@@ -74,8 +82,22 @@ export default function App() {
 
       <div className="app__main">
         <div className="app__scope">
-          <ScopeLegend channels={channels} />
-          <ScopeDisplay frames={frames} channels={channels} acquisition={status?.acquisition ?? null} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <ViewTabs
+              value={view}
+              options={[
+                { key: 'scope', label: 'Scope' },
+                { key: 'spectrum', label: 'FFT' },
+              ]}
+              onChange={setView}
+            />
+            <ScopeLegend channels={channels} />
+          </div>
+          {view === 'scope' ? (
+            <ScopeDisplay frames={frames} channels={channels} acquisition={status?.acquisition ?? null} />
+          ) : (
+            <SpectrumView spectrum={spectrum} channel={analyzeChannel} />
+          )}
         </div>
 
         <aside className="app__side">
