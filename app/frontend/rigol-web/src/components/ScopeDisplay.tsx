@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { AcquisitionState, ChannelConfig, Waveform } from '../api/types';
 
 export const CHANNEL_COLORS: Record<number, string> = {
+  0: '#e5e7eb', // MATH
   1: '#ffdc00',
   2: '#00c8ff',
   3: '#ff40c8',

@@ -12,7 +12,9 @@ import { ChannelControls } from './components/ChannelControls';
 import { TriggerControls } from './components/TriggerControls';
 import { MeasurementsPanel } from './components/MeasurementsPanel';
 import { StreamSettings, type StreamConfig } from './components/StreamSettings';
+import { MathPanel } from './components/MathPanel';
 import { ScreenshotViewer } from './components/ScreenshotViewer';
+import { useMath, type MathConfig } from './hooks/useMath';
 import { useScopeStatus } from './hooks/useScopeStatus';
 import { useWaveformStream } from './hooks/useWaveformStream';
 import { useSpectrum } from './hooks/useSpectrum';
@@ -33,12 +35,20 @@ export default function App() {
   const running = status?.acquisition.runState !== 'stopped';
   const analyzeChannel = enabledChannels[0] ?? 1;
   const spectrum = useSpectrum(analyzeChannel, 'hann', view === 'spectrum' && running);
+
   const { frames, connected, frameRate } = useWaveformStream({
     channels: enabledChannels,
     intervalMs: stream.intervalMs,
     points: stream.points,
     enabled: running && enabledChannels.length > 0,
   });
+
+  const [math, setMath] = useState<MathConfig>({ enabled: false, op: 'subtract', a: 1, b: 2 });
+  const mathFrame = useMath(math, stream.points);
+  const displayFrames = useMemo(
+    () => (mathFrame ? [...frames, mathFrame] : frames),
+    [frames, mathFrame],
+  );
 
   const patchChannel = async (channel: number, update: ChannelUpdate) => {
     setStatus((prev) =>
@@ -94,7 +104,7 @@ export default function App() {
             <ScopeLegend channels={channels} />
           </div>
           {view === 'scope' ? (
-            <ScopeDisplay frames={frames} channels={channels} acquisition={status?.acquisition ?? null} />
+            <ScopeDisplay frames={displayFrames} channels={channels} acquisition={status?.acquisition ?? null} />
           ) : (
             <SpectrumView spectrum={spectrum} channel={analyzeChannel} />
           )}
@@ -104,6 +114,7 @@ export default function App() {
           <TriggerControls acquisition={status?.acquisition ?? null} onRunState={setRunState} onUpdate={patchAcquisition} />
           <ChannelControls channels={channels} onUpdate={patchChannel} />
           <MeasurementsPanel enabledChannels={enabledChannels} />
+          <MathPanel config={math} onChange={setMath} />
           <StreamSettings config={stream} connected={connected} onChange={setStream} />
           <DeviceInfoPanel device={status?.device ?? null} />
           <ScreenshotViewer />
