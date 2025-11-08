@@ -4,10 +4,11 @@ import type { AcquisitionUpdate, ChannelUpdate, RunState } from './api/types';
 import { AppHeader } from './components/AppHeader';
 import { StatusBar } from './components/StatusBar';
 import { DeviceInfoPanel } from './components/DeviceInfoPanel';
-import { ScopeDisplay } from './components/ScopeDisplay';
+import { ScopeDisplay, type Cursors } from './components/ScopeDisplay';
 import { SpectrumView } from './components/SpectrumView';
 import { ViewTabs } from './components/ViewTabs';
 import { ScopeLegend } from './components/ScopeLegend';
+import { CursorControls } from './components/CursorControls';
 import { ChannelControls } from './components/ChannelControls';
 import { TriggerControls } from './components/TriggerControls';
 import { MeasurementsPanel } from './components/MeasurementsPanel';
@@ -43,6 +44,7 @@ export default function App() {
     enabled: running && enabledChannels.length > 0,
   });
 
+  const [cursors, setCursors] = useState<Cursors>({ enabled: false, a: 0.35, b: 0.65 });
   const [math, setMath] = useState<MathConfig>({ enabled: false, op: 'subtract', a: 1, b: 2 });
   const mathFrame = useMath(math, stream.points);
   const displayFrames = useMemo(
@@ -101,10 +103,19 @@ export default function App() {
               ]}
               onChange={setView}
             />
-            <ScopeLegend channels={channels} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <ScopeLegend channels={channels} />
+              <a
+                href={api.exportCsvUrl(analyzeChannel, stream.points)}
+                style={{ fontSize: 12, color: 'var(--accent)' }}
+                title={`Download CH${analyzeChannel} as CSV`}
+              >
+                ⤓ CSV
+              </a>
+            </div>
           </div>
           {view === 'scope' ? (
-            <ScopeDisplay frames={displayFrames} channels={channels} acquisition={status?.acquisition ?? null} />
+            <ScopeDisplay frames={displayFrames} channels={channels} acquisition={status?.acquisition ?? null} cursors={cursors} />
           ) : (
             <SpectrumView spectrum={spectrum} channel={analyzeChannel} />
           )}
@@ -114,6 +125,7 @@ export default function App() {
           <TriggerControls acquisition={status?.acquisition ?? null} onRunState={setRunState} onUpdate={patchAcquisition} />
           <ChannelControls channels={channels} onUpdate={patchChannel} />
           <MeasurementsPanel enabledChannels={enabledChannels} />
+          <CursorControls cursors={cursors} onChange={setCursors} />
           <MathPanel config={math} onChange={setMath} />
           <StreamSettings config={stream} connected={connected} onChange={setStream} />
           <DeviceInfoPanel device={status?.device ?? null} />

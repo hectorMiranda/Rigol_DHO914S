@@ -84,4 +84,8 @@ export const api = {
 
   /** URL for the display screenshot PNG (cache-busted). */
   screenshotUrl: () => `${API_BASE}/api/screenshot?t=${Date.now()}`,
+
+  /** URL for a CSV export of one channel's current trace. */
+  exportCsvUrl: (channel: number, points?: number) =>
+    `${API_BASE}/api/export/${channel}.csv${points ? `?points=${points}` : ''}`,
 };
