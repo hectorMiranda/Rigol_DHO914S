@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.0 — 2025-11-22
+
+Analysis release.
+
+- **FFT spectrum view** — radix-2 FFT with selectable windows (Hann, Hamming,
+  Blackman, flat-top), one-sided dBV magnitude, peak/fundamental marker, and a
+  Scope/FFT tab switcher. `GET /api/fft/{channel}`.
+- **Math channel** — `A op B` (add/subtract/multiply) overlaid as a MATH trace.
+  `GET /api/math/{op}`.
+- **Time cursors** — two draggable cursors with on-canvas Δt / 1÷Δt / ΔV readout.
+- **CSV export** — `GET /api/export/{channel}.csv` + a toolbar download link.
+- **Measurement trends** — per-measurement sparklines over the last 120 readings.
+- 7 new backend tests (FFT/windows).
+
 ## 0.1.0 — 2025-10-07
 
 First full-stack release of the DHO914S web stream, merged from `develop`.
