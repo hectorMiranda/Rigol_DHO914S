@@ -4,9 +4,11 @@ import type {
   ChannelConfig,
   ChannelUpdate,
   DeviceInfo,
+  MathOp,
   MeasurementSet,
   RunState,
   ScopeStatus,
+  Spectrum,
   Waveform,
 } from './types';
 
@@ -57,6 +59,12 @@ export const api = {
 
   getMeasurements: (channel: number) => request<MeasurementSet>(`measurements/${channel}`),
 
+  getFft: (channel: number, points = 2048, window = 'hann') =>
+    request<Spectrum>(`fft/${channel}?points=${points}&window=${window}`),
+
+  getMath: (op: MathOp, a: number, b: number, points = 600) =>
+    request<Waveform>(`math/${op}?a=${a}&b=${b}&points=${points}`),
+
   getAcquisition: () => request<AcquisitionState>('acquisition'),
 
   setRunState: (state: RunState) => {
@@ -76,4 +84,8 @@ export const api = {
 
   /** URL for the display screenshot PNG (cache-busted). */
   screenshotUrl: () => `${API_BASE}/api/screenshot?t=${Date.now()}`,
+
+  /** URL for a CSV export of one channel's current trace. */
+  exportCsvUrl: (channel: number, points?: number) =>
+    `${API_BASE}/api/export/${channel}.csv${points ? `?points=${points}` : ''}`,
 };

@@ -1,7 +1,15 @@
 import { useEffect, useRef } from 'react';
 import type { AcquisitionState, ChannelConfig, Waveform } from '../api/types';
+import { formatSeconds, formatHertz, formatVolts } from '../utils/format';
+
+export interface Cursors {
+  enabled: boolean;
+  a: number; // 0..1 across the time axis
+  b: number;
+}
 
 export const CHANNEL_COLORS: Record<number, string> = {
+  0: '#e5e7eb', // MATH
   1: '#ffdc00',
   2: '#00c8ff',
   3: '#ff40c8',
@@ -15,6 +23,7 @@ interface Props {
   frames: Waveform[];
   channels: ChannelConfig[];
   acquisition: AcquisitionState | null;
+  cursors?: Cursors;
 }
 
 /**
@@ -22,7 +31,7 @@ interface Props {
  * map to vertical divisions using each channel's volts/div + offset, exactly
  * like a real instrument, so the same trace looks right at any vertical scale.
  */
-export function ScopeDisplay({ frames, channels, acquisition }: Props) {
+export function ScopeDisplay({ frames, channels, acquisition, cursors }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -52,7 +61,8 @@ export function ScopeDisplay({ frames, channels, acquisition }: Props) {
       drawTrace(ctx, frame, cfg, w, h);
     }
     drawTriggerMarker(ctx, acquisition, channels, w, h);
-  }, [frames, channels, acquisition]);
+    if (cursors?.enabled) drawCursors(ctx, cursors, frames, acquisition, w, h);
+  }, [frames, channels, acquisition, cursors]);
 
   return (
     <div ref={wrapRef} className="scope" style={{ position: 'relative', flex: 1, minHeight: 280 }}>
@@ -131,6 +141,50 @@ function drawTriggerMarker(
   ctx.lineTo(w, y);
   ctx.lineTo(w - 8, y + 4);
   ctx.fill();
+}
+
+function drawCursors(
+  ctx: CanvasRenderingContext2D,
+  cursors: Cursors,
+  frames: Waveform[],
+  acquisition: AcquisitionState | null,
+  w: number,
+  h: number,
+) {
+  const xa = cursors.a * w;
+  const xb = cursors.b * w;
+
+  ctx.setLineDash([5, 4]);
+  ctx.lineWidth = 1;
+  for (const [x, label] of [[xa, 'A'], [xb, 'B']] as const) {
+    ctx.strokeStyle = '#38bdf8';
+    line(ctx, x + 0.5, 0, x + 0.5, h);
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = '11px ui-sans-serif, system-ui';
+    ctx.fillText(label, x + 3, 12);
+  }
+  ctx.setLineDash([]);
+
+  const window = (acquisition?.secondsPerDivision ?? 0) * 10;
+  const dt = (cursors.b - cursors.a) * window;
+
+  let dv: number | null = null;
+  const frame = frames.find((f) => f.channel !== 0) ?? frames[0];
+  if (frame && frame.voltage.length > 1) {
+    const idx = (frac: number) => Math.round(frac * (frame.voltage.length - 1));
+    dv = frame.voltage[idx(cursors.b)] - frame.voltage[idx(cursors.a)];
+  }
+
+  const lines = [
+    `Δt = ${formatSeconds(Math.abs(dt))}`,
+    `1/Δt = ${dt !== 0 ? formatHertz(1 / Math.abs(dt)) : '—'}`,
+    dv !== null ? `ΔV = ${formatVolts(dv)}` : '',
+  ].filter(Boolean);
+
+  ctx.fillStyle = 'rgba(10,14,22,0.85)';
+  ctx.fillRect(w - 150, 6, 144, 14 * lines.length + 8);
+  ctx.fillStyle = '#d6def0';
+  lines.forEach((l, i) => ctx.fillText(l, w - 142, 22 + i * 14));
 }
 
 function line(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number) {
