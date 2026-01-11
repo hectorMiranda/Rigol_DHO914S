@@ -97,3 +97,23 @@ export interface Spectrum {
 }
 
 export type MathOp = 'add' | 'subtract' | 'multiply';
+
+export interface SetupSummary {
+  name: string;
+  savedAt: number;
+  channelCount: number;
+}
+
+export interface UartFrame {
+  time: number;
+  value: number;
+  framingError: boolean;
+}
+
+export interface UartDecodeResult {
+  channel: number;
+  baud: number;
+  threshold: number;
+  frames: UartFrame[];
+  timestamp: number;
+}

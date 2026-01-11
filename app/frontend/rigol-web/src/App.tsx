@@ -15,6 +15,8 @@ import { MeasurementsPanel } from './components/MeasurementsPanel';
 import { StreamSettings, type StreamConfig } from './components/StreamSettings';
 import { MathPanel } from './components/MathPanel';
 import { RecorderPanel } from './components/RecorderPanel';
+import { SetupsPanel } from './components/SetupsPanel';
+import { DecodePanel } from './components/DecodePanel';
 import { ScreenshotViewer } from './components/ScreenshotViewer';
 import { useMath, type MathConfig } from './hooks/useMath';
 import { useRecorder } from './hooks/useRecorder';
@@ -25,7 +27,7 @@ import { useSpectrum } from './hooks/useSpectrum';
 type ViewMode = 'scope' | 'spectrum';
 
 export default function App() {
-  const { status, error, setStatus } = useScopeStatus();
+  const { status, error, setStatus, refresh } = useScopeStatus();
   const [stream, setStream] = useState<StreamConfig>({ intervalMs: 100, points: 600 });
   const [view, setView] = useState<ViewMode>('scope');
 
@@ -133,6 +135,8 @@ export default function App() {
           <CursorControls cursors={cursors} onChange={setCursors} />
           <RecorderPanel recorder={recorder} />
           <MathPanel config={math} onChange={setMath} />
+          <DecodePanel channel={analyzeChannel} />
+          <SetupsPanel onRecalled={refresh} />
           <StreamSettings config={stream} connected={connected} onChange={setStream} />
           <DeviceInfoPanel device={status?.device ?? null} />
           <ScreenshotViewer />

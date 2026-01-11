@@ -8,7 +8,9 @@ import type {
   MeasurementSet,
   RunState,
   ScopeStatus,
+  SetupSummary,
   Spectrum,
+  UartDecodeResult,
   Waveform,
 } from './types';
 
@@ -43,6 +45,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
+async function requestVoid(path: string, init?: RequestInit): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/${path}`, init);
+  if (!res.ok) throw new ApiError(res.status, res.statusText);
+}
+
 export const api = {
   getDevice: () => request<DeviceInfo>('device'),
   getStatus: () => request<ScopeStatus>('status'),
@@ -64,6 +71,17 @@ export const api = {
 
   getMath: (op: MathOp, a: number, b: number, points = 600) =>
     request<Waveform>(`math/${op}?a=${a}&b=${b}&points=${points}`),
+
+  decodeUart: (channel: number, baud: number, points = 4096) =>
+    request<UartDecodeResult>(`decode/uart/${channel}?baud=${baud}&points=${points}`),
+
+  listSetups: () => request<SetupSummary[]>('setups'),
+  saveSetup: (name: string) =>
+    request<unknown>(`setups/${encodeURIComponent(name)}`, { method: 'POST' }),
+  recallSetup: (name: string) =>
+    request<AcquisitionState>(`setups/${encodeURIComponent(name)}/recall`, { method: 'POST' }),
+  deleteSetup: (name: string) =>
+    requestVoid(`setups/${encodeURIComponent(name)}`, { method: 'DELETE' }),
 
   getAcquisition: () => request<AcquisitionState>('acquisition'),
 
