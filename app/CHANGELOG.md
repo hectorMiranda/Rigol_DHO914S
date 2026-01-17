@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0 — 2026-01-17
+
+Capture & protocol release.
+
+- **Stream recorder** — capture the live stream to a ring buffer and scrub back
+  through frames in a playback mode.
+- **Save/recall setups** — name and store instrument state (channels +
+  acquisition) and re-apply it. `GET/POST/DELETE /api/setups`,
+  `POST /api/setups/{name}/recall`.
+- **UART decode** — configurable 8-N-1 async-serial decoder with auto threshold,
+  shown as hex with framing-error flags. `GET /api/decode/uart/{channel}`.
+- 5 new backend tests (UART round-trip).
+
 ## 0.2.0 — 2025-11-22
 
 Analysis release.

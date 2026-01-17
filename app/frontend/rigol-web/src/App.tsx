@@ -14,8 +14,12 @@ import { TriggerControls } from './components/TriggerControls';
 import { MeasurementsPanel } from './components/MeasurementsPanel';
 import { StreamSettings, type StreamConfig } from './components/StreamSettings';
 import { MathPanel } from './components/MathPanel';
+import { RecorderPanel } from './components/RecorderPanel';
+import { SetupsPanel } from './components/SetupsPanel';
+import { DecodePanel } from './components/DecodePanel';
 import { ScreenshotViewer } from './components/ScreenshotViewer';
 import { useMath, type MathConfig } from './hooks/useMath';
+import { useRecorder } from './hooks/useRecorder';
 import { useScopeStatus } from './hooks/useScopeStatus';
 import { useWaveformStream } from './hooks/useWaveformStream';
 import { useSpectrum } from './hooks/useSpectrum';
@@ -23,7 +27,7 @@ import { useSpectrum } from './hooks/useSpectrum';
 type ViewMode = 'scope' | 'spectrum';
 
 export default function App() {
-  const { status, error, setStatus } = useScopeStatus();
+  const { status, error, setStatus, refresh } = useScopeStatus();
   const [stream, setStream] = useState<StreamConfig>({ intervalMs: 100, points: 600 });
   const [view, setView] = useState<ViewMode>('scope');
 
@@ -45,11 +49,14 @@ export default function App() {
   });
 
   const [cursors, setCursors] = useState<Cursors>({ enabled: false, a: 0.35, b: 0.65 });
+  const recorder = useRecorder(frames);
+  const baseFrames = recorder.mode === 'playback' ? recorder.playbackFrames : frames;
+
   const [math, setMath] = useState<MathConfig>({ enabled: false, op: 'subtract', a: 1, b: 2 });
   const mathFrame = useMath(math, stream.points);
   const displayFrames = useMemo(
-    () => (mathFrame ? [...frames, mathFrame] : frames),
-    [frames, mathFrame],
+    () => (mathFrame ? [...baseFrames, mathFrame] : baseFrames),
+    [baseFrames, mathFrame],
   );
 
   const patchChannel = async (channel: number, update: ChannelUpdate) => {
@@ -126,7 +133,10 @@ export default function App() {
           <ChannelControls channels={channels} onUpdate={patchChannel} />
           <MeasurementsPanel enabledChannels={enabledChannels} />
           <CursorControls cursors={cursors} onChange={setCursors} />
+          <RecorderPanel recorder={recorder} />
           <MathPanel config={math} onChange={setMath} />
+          <DecodePanel channel={analyzeChannel} />
+          <SetupsPanel onRecalled={refresh} />
           <StreamSettings config={stream} connected={connected} onChange={setStream} />
           <DeviceInfoPanel device={status?.device ?? null} />
           <ScreenshotViewer />

@@ -17,6 +17,8 @@ var host = new HostBuilder()
         services.AddSingleton<IOscilloscope>(sp =>
             OscilloscopeFactory.Create(sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<OscilloscopeOptions>>()));
 
+        services.AddSingleton<SetupStore>();
+
         // Match the hand-written SSE serialization (camelCase, string enums).
         services.Configure<JsonOptions>(o =>
         {
