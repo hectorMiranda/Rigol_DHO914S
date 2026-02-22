@@ -6,6 +6,7 @@ import { StatusBar } from './components/StatusBar';
 import { DeviceInfoPanel } from './components/DeviceInfoPanel';
 import { ScopeDisplay, type Cursors } from './components/ScopeDisplay';
 import { SpectrumView } from './components/SpectrumView';
+import { XYView } from './components/XYView';
 import { ViewTabs } from './components/ViewTabs';
 import { ScopeLegend } from './components/ScopeLegend';
 import { CursorControls } from './components/CursorControls';
@@ -24,12 +25,21 @@ import { useScopeStatus } from './hooks/useScopeStatus';
 import { useWaveformStream } from './hooks/useWaveformStream';
 import { useSpectrum } from './hooks/useSpectrum';
 
-type ViewMode = 'scope' | 'spectrum';
+type ViewMode = 'scope' | 'spectrum' | 'xy';
 
 export default function App() {
   const { status, error, setStatus, refresh } = useScopeStatus();
   const [stream, setStream] = useState<StreamConfig>({ intervalMs: 100, points: 600 });
   const [view, setView] = useState<ViewMode>('scope');
+  const [xy, setXy] = useState({ x: 1, y: 2 });
+
+  const autoset = async () => {
+    try {
+      setStatus(await api.autoset());
+    } catch {
+      /* ignore */
+    }
+  };
 
   const channels = status?.channels ?? [];
   const enabledChannels = useMemo(
@@ -102,14 +112,28 @@ export default function App() {
       <div className="app__main">
         <div className="app__scope">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <ViewTabs
-              value={view}
-              options={[
-                { key: 'scope', label: 'Scope' },
-                { key: 'spectrum', label: 'FFT' },
-              ]}
-              onChange={setView}
-            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ViewTabs
+                value={view}
+                options={[
+                  { key: 'scope', label: 'Scope' },
+                  { key: 'spectrum', label: 'FFT' },
+                  { key: 'xy', label: 'XY' },
+                ]}
+                onChange={setView}
+              />
+              <button onClick={autoset} title="Auto-set scales and timebase">Auto</button>
+              {view === 'xy' && (
+                <span style={{ display: 'flex', gap: 4, alignItems: 'center', fontSize: 12 }}>
+                  <select value={xy.x} onChange={(e) => setXy({ ...xy, x: Number(e.target.value) })}>
+                    {[1, 2, 3, 4].map((c) => <option key={c} value={c}>X:CH{c}</option>)}
+                  </select>
+                  <select value={xy.y} onChange={(e) => setXy({ ...xy, y: Number(e.target.value) })}>
+                    {[1, 2, 3, 4].map((c) => <option key={c} value={c}>Y:CH{c}</option>)}
+                  </select>
+                </span>
+              )}
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <ScopeLegend channels={channels} />
               <a
@@ -121,11 +145,11 @@ export default function App() {
               </a>
             </div>
           </div>
-          {view === 'scope' ? (
+          {view === 'scope' && (
             <ScopeDisplay frames={displayFrames} channels={channels} acquisition={status?.acquisition ?? null} cursors={cursors} />
-          ) : (
-            <SpectrumView spectrum={spectrum} channel={analyzeChannel} />
           )}
+          {view === 'spectrum' && <SpectrumView spectrum={spectrum} channel={analyzeChannel} />}
+          {view === 'xy' && <XYView frames={frames} channels={channels} xChannel={xy.x} yChannel={xy.y} />}
         </div>
 
         <aside className="app__side">

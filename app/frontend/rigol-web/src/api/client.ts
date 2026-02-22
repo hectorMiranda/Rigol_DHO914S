@@ -66,6 +66,8 @@ export const api = {
 
   getMeasurements: (channel: number) => request<MeasurementSet>(`measurements/${channel}`),
 
+  autoset: () => request<ScopeStatus>('autoset', { method: 'POST' }),
+
   getFft: (channel: number, points = 2048, window = 'hann') =>
     request<Spectrum>(`fft/${channel}?points=${points}&window=${window}`),
 
