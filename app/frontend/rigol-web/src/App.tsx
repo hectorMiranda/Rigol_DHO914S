@@ -32,6 +32,7 @@ export default function App() {
   const [stream, setStream] = useState<StreamConfig>({ intervalMs: 100, points: 600 });
   const [view, setView] = useState<ViewMode>('scope');
   const [xy, setXy] = useState({ x: 1, y: 2 });
+  const [persist, setPersist] = useState(false);
 
   const autoset = async () => {
     try {
@@ -123,6 +124,11 @@ export default function App() {
                 onChange={setView}
               />
               <button onClick={autoset} title="Auto-set scales and timebase">Auto</button>
+              {view === 'scope' && (
+                <button className={persist ? 'is-active' : ''} onClick={() => setPersist((p) => !p)} title="Afterglow persistence">
+                  Persist
+                </button>
+              )}
               {view === 'xy' && (
                 <span style={{ display: 'flex', gap: 4, alignItems: 'center', fontSize: 12 }}>
                   <select value={xy.x} onChange={(e) => setXy({ ...xy, x: Number(e.target.value) })}>
@@ -146,7 +152,7 @@ export default function App() {
             </div>
           </div>
           {view === 'scope' && (
-            <ScopeDisplay frames={displayFrames} channels={channels} acquisition={status?.acquisition ?? null} cursors={cursors} />
+            <ScopeDisplay frames={displayFrames} channels={channels} acquisition={status?.acquisition ?? null} cursors={cursors} persistence={persist} />
           )}
           {view === 'spectrum' && <SpectrumView spectrum={spectrum} channel={analyzeChannel} />}
           {view === 'xy' && <XYView frames={frames} channels={channels} xChannel={xy.x} yChannel={xy.y} />}

@@ -24,16 +24,20 @@ interface Props {
   channels: ChannelConfig[];
   acquisition: AcquisitionState | null;
   cursors?: Cursors;
+  persistence?: boolean;
 }
+
+const PERSIST_DEPTH = 16;
 
 /**
  * Renders the scope graticule and each channel's trace onto a canvas. Voltages
  * map to vertical divisions using each channel's volts/div + offset, exactly
  * like a real instrument, so the same trace looks right at any vertical scale.
  */
-export function ScopeDisplay({ frames, channels, acquisition, cursors }: Props) {
+export function ScopeDisplay({ frames, channels, acquisition, cursors, persistence }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const historyRef = useRef<Waveform[][]>([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -55,14 +59,30 @@ export function ScopeDisplay({ frames, channels, acquisition, cursors }: Props) 
     drawGraticule(ctx, w, h);
 
     const byChannel = new Map(channels.map((c) => [c.channel, c]));
-    for (const frame of frames) {
-      const cfg = byChannel.get(frame.channel);
-      if (cfg && !cfg.enabled) continue;
-      drawTrace(ctx, frame, cfg, w, h);
+    const drawSet = (set: Waveform[], alpha: number) => {
+      ctx.globalAlpha = alpha;
+      for (const frame of set) {
+        const cfg = byChannel.get(frame.channel);
+        if (cfg && !cfg.enabled) continue;
+        drawTrace(ctx, frame, cfg, w, h);
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    if (persistence) {
+      const hist = historyRef.current;
+      hist.push(frames);
+      if (hist.length > PERSIST_DEPTH) hist.shift();
+      // Oldest frames faintest — an afterglow trail.
+      hist.forEach((set, i) => drawSet(set, 0.12 + 0.88 * ((i + 1) / hist.length)));
+    } else {
+      historyRef.current = [];
+      drawSet(frames, 1);
     }
+
     drawTriggerMarker(ctx, acquisition, channels, w, h);
     if (cursors?.enabled) drawCursors(ctx, cursors, frames, acquisition, w, h);
-  }, [frames, channels, acquisition, cursors]);
+  }, [frames, channels, acquisition, cursors, persistence]);
 
   return (
     <div ref={wrapRef} className="scope" style={{ position: 'relative', flex: 1, minHeight: 280 }}>
