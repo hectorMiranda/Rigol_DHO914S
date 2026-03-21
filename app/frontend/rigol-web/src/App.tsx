@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from './api/client';
 import type { AcquisitionUpdate, ChannelUpdate, RunState } from './api/types';
 import { AppHeader } from './components/AppHeader';
@@ -24,15 +24,22 @@ import { useRecorder } from './hooks/useRecorder';
 import { useScopeStatus } from './hooks/useScopeStatus';
 import { useWaveformStream } from './hooks/useWaveformStream';
 import { useSpectrum } from './hooks/useSpectrum';
+import { useLocalStorage } from './hooks/useLocalStorage';
+import { useHotkeys } from './hooks/useHotkeys';
 
 type ViewMode = 'scope' | 'spectrum' | 'xy';
 
 export default function App() {
   const { status, error, setStatus, refresh } = useScopeStatus();
-  const [stream, setStream] = useState<StreamConfig>({ intervalMs: 100, points: 600 });
+  const [stream, setStream] = useLocalStorage<StreamConfig>('rigol.stream', { intervalMs: 100, points: 600 });
+  const [theme, setTheme] = useLocalStorage<'dark' | 'light'>('rigol.theme', 'dark');
   const [view, setView] = useState<ViewMode>('scope');
   const [xy, setXy] = useState({ x: 1, y: 2 });
   const [persist, setPersist] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   const autoset = async () => {
     try {
@@ -102,12 +109,29 @@ export default function App() {
     }
   };
 
+  // Keyboard shortcuts: space=run/stop, s=single, a=autoset, p=persist, f=cycle view.
+  useHotkeys(
+    useMemo(
+      () => ({
+        ' ': () => void setRunState(running ? 'stopped' : 'running'),
+        s: () => void setRunState('single'),
+        a: () => void autoset(),
+        p: () => setPersist((v) => !v),
+        f: () => setView((v) => (v === 'scope' ? 'spectrum' : v === 'spectrum' ? 'xy' : 'scope')),
+      }),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [running],
+    ),
+  );
+
   return (
     <div className="app">
       <AppHeader
         device={status?.device ?? null}
         runState={status?.acquisition.runState ?? 'stopped'}
         connected={connected}
+        theme={theme}
+        onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
       />
 
       <div className="app__main">
