@@ -117,3 +117,21 @@ export interface UartDecodeResult {
   frames: UartFrame[];
   timestamp: number;
 }
+
+export interface MaskRequest {
+  channel: number;
+  lowerVolts: number;
+  upperVolts: number;
+  points?: number;
+}
+
+export interface MaskResult {
+  channel: number;
+  lowerVolts: number;
+  upperVolts: number;
+  total: number;
+  violations: number;
+  pass: boolean;
+  violationRatio: number;
+  timestamp: number;
+}

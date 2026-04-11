@@ -4,6 +4,8 @@ import type {
   ChannelConfig,
   ChannelUpdate,
   DeviceInfo,
+  MaskRequest,
+  MaskResult,
   MathOp,
   MeasurementSet,
   RunState,
@@ -76,6 +78,9 @@ export const api = {
 
   decodeUart: (channel: number, baud: number, points = 4096) =>
     request<UartDecodeResult>(`decode/uart/${channel}?baud=${baud}&points=${points}`),
+
+  maskTest: (req: MaskRequest) =>
+    request<MaskResult>('mask/test', { method: 'POST', body: JSON.stringify(req) }),
 
   listSetups: () => request<SetupSummary[]>('setups'),
   saveSetup: (name: string) =>

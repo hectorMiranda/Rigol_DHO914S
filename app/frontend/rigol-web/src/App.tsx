@@ -18,6 +18,7 @@ import { MathPanel } from './components/MathPanel';
 import { RecorderPanel } from './components/RecorderPanel';
 import { SetupsPanel } from './components/SetupsPanel';
 import { DecodePanel } from './components/DecodePanel';
+import { MaskPanel, type MaskConfig } from './components/MaskPanel';
 import { ScreenshotViewer } from './components/ScreenshotViewer';
 import { useMath, type MathConfig } from './hooks/useMath';
 import { useRecorder } from './hooks/useRecorder';
@@ -36,6 +37,7 @@ export default function App() {
   const [view, setView] = useState<ViewMode>('scope');
   const [xy, setXy] = useState({ x: 1, y: 2 });
   const [persist, setPersist] = useState(false);
+  const [mask, setMask] = useState<MaskConfig>({ enabled: false, lower: -1.5, upper: 1.5 });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -176,7 +178,14 @@ export default function App() {
             </div>
           </div>
           {view === 'scope' && (
-            <ScopeDisplay frames={displayFrames} channels={channels} acquisition={status?.acquisition ?? null} cursors={cursors} persistence={persist} />
+            <ScopeDisplay
+              frames={displayFrames}
+              channels={channels}
+              acquisition={status?.acquisition ?? null}
+              cursors={cursors}
+              persistence={persist}
+              mask={{ enabled: mask.enabled, channel: analyzeChannel, lower: mask.lower, upper: mask.upper }}
+            />
           )}
           {view === 'spectrum' && <SpectrumView spectrum={spectrum} channel={analyzeChannel} />}
           {view === 'xy' && <XYView frames={frames} channels={channels} xChannel={xy.x} yChannel={xy.y} />}
@@ -190,6 +199,7 @@ export default function App() {
           <RecorderPanel recorder={recorder} />
           <MathPanel config={math} onChange={setMath} />
           <DecodePanel channel={analyzeChannel} />
+          <MaskPanel channel={analyzeChannel} config={mask} onChange={setMask} />
           <SetupsPanel onRecalled={refresh} />
           <StreamSettings config={stream} connected={connected} onChange={setStream} />
           <DeviceInfoPanel device={status?.device ?? null} />
