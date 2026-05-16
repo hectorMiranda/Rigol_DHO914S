@@ -46,8 +46,19 @@ is runnable on a laptop. Point it at real hardware by setting
 `Oscilloscope:Mode = Scpi` and `Oscilloscope:Resource` in
 `local.settings.json` (see `local.settings.sample.json`).
 
-See [`docs/architecture.md`](docs/architecture.md) and
-[`docs/api.md`](docs/api.md) for details.
+## Features
+
+- **Live scope display** — multi-channel canvas traces, graticule, trigger
+  marker, afterglow persistence, and time cursors with Δt/ΔV readout.
+- **FFT spectrum** and **XY (Lissajous)** views, switchable from the toolbar.
+- **MATH channel** (A ± / × B) overlaid on the scope.
+- **Measurements** with live trend sparklines; **auto-set**; **CSV export**.
+- **Recorder** — capture the stream and scrub back through frames.
+- **Save/recall setups**, **UART decode**, and **pass/fail mask testing**.
+- Light/dark theme, keyboard shortcuts, persisted settings.
+
+See [`docs/architecture.md`](docs/architecture.md), [`docs/api.md`](docs/api.md)
+and [`docs/deploy.md`](docs/deploy.md) for details.
 
 ## Layout
 
