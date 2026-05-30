@@ -24,16 +24,21 @@ interface Props {
   channels: ChannelConfig[];
   acquisition: AcquisitionState | null;
   cursors?: Cursors;
+  persistence?: boolean;
+  mask?: { enabled: boolean; channel: number; lower: number; upper: number };
 }
+
+const PERSIST_DEPTH = 16;
 
 /**
  * Renders the scope graticule and each channel's trace onto a canvas. Voltages
  * map to vertical divisions using each channel's volts/div + offset, exactly
  * like a real instrument, so the same trace looks right at any vertical scale.
  */
-export function ScopeDisplay({ frames, channels, acquisition, cursors }: Props) {
+export function ScopeDisplay({ frames, channels, acquisition, cursors, persistence, mask }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const historyRef = useRef<Waveform[][]>([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -55,14 +60,31 @@ export function ScopeDisplay({ frames, channels, acquisition, cursors }: Props) 
     drawGraticule(ctx, w, h);
 
     const byChannel = new Map(channels.map((c) => [c.channel, c]));
-    for (const frame of frames) {
-      const cfg = byChannel.get(frame.channel);
-      if (cfg && !cfg.enabled) continue;
-      drawTrace(ctx, frame, cfg, w, h);
+    const drawSet = (set: Waveform[], alpha: number) => {
+      ctx.globalAlpha = alpha;
+      for (const frame of set) {
+        const cfg = byChannel.get(frame.channel);
+        if (cfg && !cfg.enabled) continue;
+        drawTrace(ctx, frame, cfg, w, h);
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    if (persistence) {
+      const hist = historyRef.current;
+      hist.push(frames);
+      if (hist.length > PERSIST_DEPTH) hist.shift();
+      // Oldest frames faintest — an afterglow trail.
+      hist.forEach((set, i) => drawSet(set, 0.12 + 0.88 * ((i + 1) / hist.length)));
+    } else {
+      historyRef.current = [];
+      drawSet(frames, 1);
     }
+
     drawTriggerMarker(ctx, acquisition, channels, w, h);
+    if (mask?.enabled) drawMask(ctx, mask, channels, w, h);
     if (cursors?.enabled) drawCursors(ctx, cursors, frames, acquisition, w, h);
-  }, [frames, channels, acquisition, cursors]);
+  }, [frames, channels, acquisition, cursors, persistence, mask]);
 
   return (
     <div ref={wrapRef} className="scope" style={{ position: 'relative', flex: 1, minHeight: 280 }}>
@@ -141,6 +163,33 @@ function drawTriggerMarker(
   ctx.lineTo(w, y);
   ctx.lineTo(w - 8, y + 4);
   ctx.fill();
+}
+
+function drawMask(
+  ctx: CanvasRenderingContext2D,
+  mask: { channel: number; lower: number; upper: number },
+  channels: ChannelConfig[],
+  w: number,
+  h: number,
+) {
+  const cfg = channels.find((c) => c.channel === mask.channel);
+  const perDiv = h / Y_DIV;
+  const center = h / 2;
+  const toY = (v: number) => center - ((v + (cfg?.offsetVolts ?? 0)) / (cfg?.voltsPerDivision ?? 1)) * perDiv;
+
+  const yUpper = toY(mask.upper);
+  const yLower = toY(mask.lower);
+
+  // Tint the regions outside the band.
+  ctx.fillStyle = 'rgba(251,146,60,0.08)';
+  ctx.fillRect(0, 0, w, Math.max(0, yUpper));
+  ctx.fillRect(0, Math.min(h, yLower), w, h - Math.min(h, yLower));
+
+  ctx.strokeStyle = '#fbbf24';
+  ctx.setLineDash([6, 4]);
+  line(ctx, 0, yUpper + 0.5, w, yUpper + 0.5);
+  line(ctx, 0, yLower + 0.5, w, yLower + 0.5);
+  ctx.setLineDash([]);
 }
 
 function drawCursors(

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.4.0 — 2026-05-29
+
+Instrument-grade release.
+
+- **XY (Lissajous) view** and **afterglow persistence** on the scope display.
+- **Auto-set** — `POST /api/autoset` picks vertical/timebase scales from
+  measurements (snapped to 1-2-5 steps).
+- **Pass/fail mask test** — `POST /api/mask/test` with an on-scope band overlay
+  and live PASS/FAIL.
+- **Light/dark theme**, **keyboard shortcuts** (space/s/a/p/f) and
+  localStorage-persisted settings.
+- **App integration test** (full render against a mocked API).
+- **Azure Bicep** infrastructure + deploy guide.
+- 8 new backend tests (ranges, mask).
+
 ## 0.3.0 — 2026-01-17
 
 Capture & protocol release.

@@ -4,6 +4,8 @@ import type {
   ChannelConfig,
   ChannelUpdate,
   DeviceInfo,
+  MaskRequest,
+  MaskResult,
   MathOp,
   MeasurementSet,
   RunState,
@@ -66,6 +68,8 @@ export const api = {
 
   getMeasurements: (channel: number) => request<MeasurementSet>(`measurements/${channel}`),
 
+  autoset: () => request<ScopeStatus>('autoset', { method: 'POST' }),
+
   getFft: (channel: number, points = 2048, window = 'hann') =>
     request<Spectrum>(`fft/${channel}?points=${points}&window=${window}`),
 
@@ -74,6 +78,9 @@ export const api = {
 
   decodeUart: (channel: number, baud: number, points = 4096) =>
     request<UartDecodeResult>(`decode/uart/${channel}?baud=${baud}&points=${points}`),
+
+  maskTest: (req: MaskRequest) =>
+    request<MaskResult>('mask/test', { method: 'POST', body: JSON.stringify(req) }),
 
   listSetups: () => request<SetupSummary[]>('setups'),
   saveSetup: (name: string) =>

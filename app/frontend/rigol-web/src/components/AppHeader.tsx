@@ -4,9 +4,11 @@ interface Props {
   device: DeviceInfo | null;
   runState: RunState;
   connected: boolean;
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
 }
 
-export function AppHeader({ device, runState, connected }: Props) {
+export function AppHeader({ device, runState, connected, theme, onToggleTheme }: Props) {
   return (
     <header className="header">
       <span className="header__title">Rigol DHO914S</span>
@@ -23,6 +25,9 @@ export function AppHeader({ device, runState, connected }: Props) {
           {device.simulated ? 'SIMULATED' : 'LIVE'}
         </span>
       )}
+      <button onClick={onToggleTheme} title="Toggle theme" style={{ padding: '2px 8px' }}>
+        {theme === 'dark' ? '☀' : '☾'}
+      </button>
     </header>
   );
 }

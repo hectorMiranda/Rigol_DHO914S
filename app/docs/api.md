@@ -19,6 +19,14 @@ appropriate status code.
 | PATCH/PUT | `/acquisition` | Update timebase/trigger (`AcquisitionUpdate`). |
 | GET | `/screenshot` | Display as `image/png`. |
 | GET | `/stream?channels=1,2&interval=100&points=600` | SSE live waveform stream. |
+| GET | `/fft/{n}?points=2048&window=hann` | One-sided dBV magnitude spectrum. |
+| GET | `/math/{add\|subtract\|multiply}?a=1&b=2` | Sample-wise MATH channel. |
+| GET | `/export/{n}.csv?points=N` | Download trace as CSV. |
+| POST | `/autoset` | Auto vertical/timebase scaling from measurements. |
+| GET/POST/DELETE | `/setups[/{name}]` | List / save / delete named setups. |
+| POST | `/setups/{name}/recall` | Re-apply a saved setup. |
+| GET | `/decode/uart/{n}?baud=9600` | UART (8-N-1) protocol decode. |
+| POST | `/mask/test` | Pass/fail mask test against a voltage band. |
 
 ## Examples
 
